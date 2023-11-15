@@ -1,97 +1,105 @@
+
 class ProductManager {
-    constructor() {
-        this.products = [];
+  constructor(path) {
+    this.path = path;
+    this.products = [];
+    this.loadProducts();
+  }
+
+  loadProducts() {
+    try {
+      const data = fs.readFileSync(this.path, 'utf8');
+      this.products = JSON.parse(data);
+    } catch (error) {
+      
+    }
+  }
+
+  saveProducts() {
+    const data = JSON.stringify(this.products, null, 2);
+    fs.writeFileSync(this.path, data, 'utf8');
+  }
+
+  addProduct(product) {
+    const newProduct = {
+      id: this.products.length + 1,
+      ...product,
+    };
+
+    this.products.push(newProduct);
+    this.saveProducts();
+    return newProduct;
+  }
+
+  getProducts() {
+    return this.products;
+  }
+
+  getProductById(id) {
+    return this.products.find(product => product.id === id);
+  }
+
+  updateProduct(id, updatedFields) {
+    const index = this.products.findIndex(product => product.id === id);
+
+    if (index !== -1) {
+      this.products[index] = { ...this.products[index], ...updatedFields };
+      this.saveProducts();
+      return this.products[index];
     }
 
-    getProducts() {
-        return this.products;
+    return null;
+  }
+
+  deleteProduct(id) {
+    const index = this.products.findIndex(product => product.id === id);
+
+    if (index !== -1) {
+      const deletedProduct = this.products.splice(index, 1);
+      this.saveProducts();
+      return deletedProduct[0];
     }
 
-    addProduct(title, description, price, thumbnail, code, stock) {
-        const product_id = this.generateUniqueId();
-        const product = {
-            id: product_id,
-            title: title,
-            description: description,
-            price: price,
-            thumbnail: thumbnail,
-            code: code,
-            stock: stock
-        };
-        this.products.push(product);
-        return product;
-    }
-
-    getProductById(product_id) {
-        const product = this.products.find(product => product.id === product_id);
-        if (!product) {
-            throw new Error("Producto no encontrado");
-        }
-        return product;
-    }
-
-    updateProduct(product_id, field, value) {
-        const product = this.getProductById(product_id);
-        product[field] = value;
-        return product;
-    }
-
-    deleteProduct(product_id) {
-        const index = this.products.findIndex(product => product.id === product_id);
-        if (index !== -1) {
-            this.products.splice(index, 1);
-        } else {
-            throw new Error("Producto no encontrado");
-        }
-    }
-
-    generateUniqueId() {
-        return Math.random().toString(36).substr(2, 9); // Simple generador de ID único
-    }
+    return null;
+  }
 }
 
-// Creara una instancia de ProductManager
-const manager = new ProductManager();
 
-// Llamara a getProducts recién creada la instancia
-const products = manager.getProducts();
-console.log("Productos iniciales:", products);
+const productManager = new ProductManager('productos.json');
 
-// Llamara al método addProduct
-const newProduct = manager.addProduct(
-    "producto prueba",
-    "Este es un producto prueba",
-    200,
-    "Sin imagen",
-    "abc123",
-    25
-);
-console.log("Producto agregado:", newProduct);
 
-// Llamara a getProducts nuevamente
-const updatedProducts = manager.getProducts();
-console.log("Productos actualizados:", updatedProducts);
+const newProduct = {
+  title: 'Producto de Ejemplo',
+  description: 'Descripción del producto de ejemplo',
+  price: 19.99,
+  thumbnail: 'imagen.jpg',
+  code: 'ABC123',
+  stock: 50,
+};
 
-// Llamara a getProductById
-try {
-    const productById = manager.getProductById(newProduct.id);
-    console.log("Producto encontrado por ID:", productById);
-} catch (error) {
-    console.error(error.message);
-}
+const addedProduct = productManager.addProduct(newProduct);
+console.log('Producto agregado:', addedProduct);
 
-// Llamara a updateProduct
-try {
-    const updatedProduct = manager.updateProduct(newProduct.id, 'price', 250);
-    console.log("Producto actualizado:", updatedProduct);
-} catch (error) {
-    console.error(error.message);
-}
 
-// Llamara a deleteProduct
-try {
-    manager.deleteProduct(newProduct.id);
-    console.log("Producto eliminado");
-} catch (error) {
-    console.error(error.message);
-}
+const allProducts = productManager.getProducts();
+console.log('Todos los productos:', allProducts);
+
+
+const productIdToFind = 1;
+const foundProduct = productManager.getProductById(productIdToFind);
+console.log('Producto encontrado por ID:', foundProduct);
+
+
+const productIdToUpdate = 1;
+const updatedFields = { price: 24.99, stock: 40 };
+const updatedProduct = productManager.updateProduct(productIdToUpdate, updatedFields);
+console.log('Producto actualizado:', updatedProduct);
+
+
+const productIdToDelete = 1;
+const deletedProduct = productManager.deleteProduct(productIdToDelete);
+console.log('Producto eliminado:', deletedProduct);
+
+
+const remainingProducts = productManager.getProducts();
+console.log('Productos restantes:', remainingProducts);
